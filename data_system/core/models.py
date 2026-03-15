@@ -1,0 +1,1 @@
+# Định nghĩa cấu trúc node, edge, graph, request, incident

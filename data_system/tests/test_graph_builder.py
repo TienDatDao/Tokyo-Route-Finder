@@ -1,0 +1,1 @@
+#Đảm bảo đồ thị build ra không bị lỗi nhiều nút gốc ( multi_graph )

@@ -1,0 +1,1 @@
+# Giả lập sự cố xem đồ thị có cập nhật trọng số linh tinh không, có thể xảy ra vô cùng

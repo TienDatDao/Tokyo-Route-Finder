@@ -1,0 +1,1 @@
+# Kiểm tra tính hợp lệ của dữ liệu đầu vào
