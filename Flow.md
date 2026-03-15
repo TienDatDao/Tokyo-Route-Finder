@@ -88,12 +88,12 @@ graph = {
             "lat": 35.6897,
             "lon": 139.7004,
             "name_en": "Shinjuku",
-            "is_active": True  # Ga đang hoạt động bình thường [cite: 10]
+            "is_active": True
         },
         "connections": {
             "Yoyogi": {
-                "time": 3,      # Trọng số thời gian (phút) [cite: 14]
-                "cost": 160,    # Trọng số giá vé (Yên) [cite: 15]
+                "time": 3,
+                "cost": 160,
                 "line": "Yamanote Line",
                 "distance": 2.7
             },
