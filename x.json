@@ -1,0 +1,54 @@
+{
+    "request_id": "REQ-2024-001",
+    "search_params": {
+        "start_station": "Shinjuku",
+        "end_station": "Tokyo",
+        "criteria": "shortest_time"
+    },
+    "graph_data": {
+        "Shinjuku": {
+            "metadata": {
+                "lat": 35.6897,
+                "lon": 139.7004,
+                "name_en": "Shinjuku",
+                "is_active": true
+            },
+            "connections": {
+                "Yoyogi": {
+                    "time": 3,
+                    "cost": 160,
+                    "line": "Yamanote Line",
+                    "distance": 2.7
+                },
+                "Shibuya": {
+                    "time": 5,
+                    "cost": 160,
+                    "line": "Saikyo Line",
+                    "distance": 4.2
+                }
+            }
+        },
+        "Yoyogi": {
+            "metadata": {
+                "lat": 35.6830,
+                "lon": 139.7020,
+                "name_en": "Yoyogi",
+                "is_active": true
+            },
+            "connections": {
+                "Shinjuku": {
+                    "time": 3,
+                    "cost": 160,
+                    "line": "Yamanote Line",
+                    "distance": 2.7
+                },
+                "Harajuku": {
+                    "time": 2,
+                    "cost": 160,
+                    "line": "Yamanote Line",
+                    "distance": 1.5
+                }
+            }
+        }
+    }
+}
