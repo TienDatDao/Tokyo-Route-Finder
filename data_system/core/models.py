@@ -22,6 +22,8 @@ class OptimizedBy(str, Enum):
 class IncidentType(str, Enum):
     STATION_CLOSED = "STATION_CLOSED"
     LINE_MAINTENANCE = "LINE_MAINTENANCE"
+    STATION_REOPEN = "STATION_REOPEN"
+    LINE_REOPEN = "LINE_REOPEN"
 
 class ResponseStatus(str, Enum):
     SUCCESS = "SUCCESS"

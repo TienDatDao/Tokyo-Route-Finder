@@ -16,9 +16,7 @@ from ..utils.logger import logger
 from ..utils.geo_calc import haversine_distance
 
 
-# ==========================================
-# CÁC HÀM XÂY DỰNG ĐỒ THỊ (Graph Builders)
-# ==========================================
+# CÁC HÀM XÂY DỰNG ĐỒ THỊ
 # Các hàm xây dựng đồ thị sẽ được gọi từ hàm chính build_tokyo_graph() ở dưới, mỗi hàm sẽ đảm nhận một phần việc cụ thể như xây dựng cạnh tàu,
 # xây dựng cạnh đi bộ, v.v...
 def _add_edges_for_station_list(graph: Graph, line_name: str, station_list: List[str]):
@@ -63,7 +61,7 @@ def _build_walk_edges(graph: Graph, raw_groups: List[List[List[str]]]):
     # Xây đường đi bộ: Nối các ga trong cùng 1 cụm (Station Complex)
 
     for complex_group in raw_groups:
-        # Gom tất cả các ID trong cụm này thành 1 list phẳng để dễ xử lý
+        # Gom tất cả các ID trong cụm này thành 1 list phẳng để xử lý
         all_stations_in_complex = []
         for fare_zone in complex_group:
             all_stations_in_complex.extend(fare_zone)
@@ -76,7 +74,7 @@ def _build_walk_edges(graph: Graph, raw_groups: List[List[List[str]]]):
             # Xác định xem 2 ga này có cùng khu vực soát vé (fare_zone) không
             is_same_fare_zone = any((station_a in fz and station_b in fz) for fz in complex_group)
 
-            # Tính toán Hình phạt chuyển tuyến (Transfer Penalty)
+            # Tính toán tgian chuyển tuyến đi bộ dựa trên việc có cùng khu vực soát vé hay không
             if is_same_fare_zone:
                 walk_time = config.WALK_TIME_SAME_ZONE_MIN
             else:
