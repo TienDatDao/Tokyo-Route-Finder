@@ -11,20 +11,15 @@ Tài liệu này đặc tả các Interface trao đổi dữ liệu giữa các 
 ```json
 { 
   "start_point": { 
-    "input_type": "STATION_ID",  
-    "value": "JR-East.Yamanote.Shinjuku" 
+    "station": "STATION_NAME"
   }, 
   "end_point": { 
-    "input_type": "COORDINATE",  
-    "value": { 
-      "lat": 35.6585,  
-      "lon": 139.7454 
-    } 
+    "station": "STATION_NAME"
   }, 
   "preferences": { 
     "optimize_by": "shortest_time" 
   } 
-} 
+}
 ```
 
 Lưu ý: `criteria` có thể là: `shortest_time`, `least_transfers`, `lowest_cost`.
