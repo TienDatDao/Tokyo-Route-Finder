@@ -1,0 +1,17 @@
+:root {
+    /* Colors - Lấy cảm hứng từ các tuyến tàu Tokyo */
+    --primary: #0088cc;
+    --primary-dark: #006699;
+    --yamanote-green: #9acd32;
+    --chuo-orange: #f39700;
+    --bg-light: #f4f7f6;
+    --text-main: #2d3436;
+    --white: #ffffff;
+    --danger: #ff4757;
+    
+    /* Layout */
+    --sidebar-width: 350px;
+    --header-height: 60px;
+    --shadow: 0 4px 12px rgba(0,0,0,0.1);
+    --border-radius: 8px;
+}

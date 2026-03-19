@@ -1,0 +1,51 @@
+#sidebar {
+    width: var(--sidebar-width);
+    background: var(--white);
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    flex-shrink: 0;
+    border-right: 1px solid #eee;
+}
+
+#sidebar h1 {
+    flex-shrink: 0;
+    margin: 0 0 15px 0;
+}
+
+#sidebar .search-group {
+    flex-shrink: 0;
+    overflow: visible !important;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+#sidebar .options {
+    flex-shrink: 0;
+}
+
+#sidebar button {
+    flex-shrink: 0;
+    margin-bottom: 15px;
+}
+
+#sidebar > #result-info {
+    overflow-y: auto;
+    flex: 1;
+    margin-top: 10px;
+}
+
+.search-group {
+    margin-bottom: 20px;
+}
+
+#app-container {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    position: relative;
+    width: 100%;
+}
