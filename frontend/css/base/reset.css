@@ -1,0 +1,19 @@
+html {
+    height: 100%;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-main);
+    background-color: var(--bg-light);
+    overflow: hidden; /* Tránh cuộn trang vì bản đồ sẽ chiếm full màn hình */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
