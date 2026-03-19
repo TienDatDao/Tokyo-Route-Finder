@@ -1,0 +1,3 @@
+# Ignore OSMnx cache
+cache/
+__pycache__/

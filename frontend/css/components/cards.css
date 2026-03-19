@@ -1,0 +1,13 @@
+.result-card {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    background: #f8f9fa;
+    border-left: 5px solid var(--primary);
+    box-shadow: var(--shadow);
+}
+
+.result-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
