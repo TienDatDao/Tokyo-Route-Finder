@@ -1,3 +1,2 @@
-# Ignore OSMnx cache
-cache/
-__pycache__/
+.idea/
+*.iml
