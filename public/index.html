@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tokyo Route Finder - Admin Panel</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { color: #333; border-bottom: 3px solid #0066cc; padding-bottom: 10px; }
+    .section {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+      color: #333;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    textarea { height: 150px; resize: vertical; }
+    button {
+      margin-top: 15px;
+      padding: 12px 24px;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    button:hover { background: #0052a3; }
+    pre {
+      background: #f4f4f4;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow-x: auto;
+      border-left: 4px solid #0066cc;
+    }
+    .hint {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #1565c0;
+    }
+    .info-box {
+      background: #f0f7ff;
+      border: 1px solid #0066cc;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tokyo Route Finder - Admin Panel</h1>
+
+    <div class="section">
+      <h2>Test Tuyến Đường & Incidents</h2>
+      <form action="/test-incidents" method="POST">
+
+        <div class="info-box">
+          <strong>Giải thích:</strong> Khi đóng một ga hoặc tuyến, hệ thống sẽ tìm route thay thế.
+          Nếu không có route thay thế, sẽ hiển thị "Khong tim thay duong di!".
+        </div>
+
+        <label for="startStation">Ga Xuất Phát:</label>
+        <input type="text" name="startStation" id="startStation" value="JR-East.Joetsu.Minakami" placeholder="Ví dụ: JR-East.Yamanote.Shinjuku">
+        <div class="hint">Ví dụ: JR-East.Joetsu.Minakami, JR-East.Yamanote.Tokyo</div>
+
+        <label for="endStation">Ga Đích:</label>
+        <input type="text" name="endStation" id="endStation" value="JR-East.Ryomo.Maebashi" placeholder="Ví dụ: JR-East.Ryomo.Maebashi">
+        <div class="hint">Ví dụ: JR-East.Ryomo.Maebashi, JR-East.Yamanote.Shinjuku</div>
+
+        <label for="incidentsJson">Incidents JSON:</label>
+        <textarea name="incidentsJson" id="incidentsJson" placeholder='Ví dụ - Đóng ga:
+[
+  {"incident_id": "1", "type": "STATION_CLOSED", "target_id": "JR-East.Ryomo.ShimMaebashi"}
+]
+
+Ví dụ - Bảo trì tuyến:
+[
+  {"incident_id": "1", "type": "LINE_MAINTENANCE", "target_id": "Joetsu Line"}
+]
+
+Ví dụ - Mở lại ga:
+[
+  {"incident_id": "1", "type": "STATION_REOPEN", "target_id": "JR-East.Ryomo.ShimMaebashi"}
+]'></textarea>
+        <div class="hint">Định dạng JSON phải hợp lệ. Loại sự cố: STATION_CLOSED, LINE_MAINTENANCE, STATION_REOPEN, LINE_REOPEN</div>
+
+        <button type="submit">Test Route & Incidents</button>
+      </form>
+    </div>
+
+    <div class="section">
+      <h3>Hướng Dẫn</h3>
+      <p><strong>Các loại sự cố:</strong></p>
+      <ul>
+        <li><code>STATION_CLOSED</code>: Đóng một ga (xóa khỏi graph, route sẽ tìm đường khác)</li>
+        <li><code>LINE_MAINTENANCE</code>: Bảo trì tuyến (xóa tất cả edges của tuyến)</li>
+        <li><code>STATION_REOPEN</code>: Mở lại một ga đã đóng</li>
+        <li><code>LINE_REOPEN</code>: Mở lại một tuyến đã bảo trì</li>
+      </ul>
+      <p><strong>Cách hoạt động:</strong></p>
+      <ul>
+        <li>Hệ thống sẽ hiển thị route <strong>TRƯỚC</strong> khi áp dụng incidents</li>
+        <li>Sau đó hiển thị route <strong>SAU</strong> khi áp dụng incidents (nếu có đường khác, sẽ dùng; nếu không, "Khong tim thay duong di!")</li>
+        <li>Cuối cùng hiển thị route <strong>SAU MỞ LẠI</strong> (mô phỏng incidents được xử lý xong)</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
