@@ -11,15 +11,10 @@ Tài liệu này đặc tả các Interface trao đổi dữ liệu giữa các 
 ```json
 { 
   "start_point": { 
-    "input_type": "STATION_ID",  
-    "value": "JR-East.Yamanote.Shinjuku" 
+    "station": "STATION_ID",   
   }, 
   "end_point": { 
-    "input_type": "COORDINATE",  
-    "value": { 
-      "lat": 35.6585,  
-      "lon": 139.7454 
-    } 
+    "station": "STATION_ID",
   }, 
   "preferences": { 
     "optimize_by": "shortest_time" 
@@ -137,13 +132,43 @@ Khi cần, backend sẽ gọi hàm `find_optimal_route(graph, start_station, end
 
 ```python
 #kiểu dữ liệu dictionary trong python
-optimal_route = {
-    "status": "SUCCESS",
-    "path": ["Shinjuku", "Yoyogi", "Shibuya"],
-    "total_time": 8,
-    "total_cost": 320,
+optimal_route = { 
+  "status": "SUCCESS", 
+  "suggested_start_station": { 
+    "id": "JR-East.Yamanote.Shinjuku", 
+    "name": "Shinjuku" 
+  },  
+  "route": { 
+    "path": [ 
+      "JR-East.Yamanote.Shinjuku", 
+      "JR-East.ChuoSobuLocal.Yoyogi", 
+      "JR-East.ChuoRapid.Tokyo" 
+    ], 
+    "total_time": 25, 
+    "total_cost": 400, 
     "transfers": 1,
-}
+    "details": [ 
+      { 
+        "station_id": "JR-East.Yamanote.Shinjuku", 
+        "station_name": "Shinjuku", 
+        "line": "Yamanote Line", 
+        "action": "Board" 
+      }, 
+      { 
+        "station_id": "JR-East.ChuoSobuLocal.Yoyogi", 
+        "station_name": "Yoyogi", 
+        "line": "Chuo Line", 
+        "action": "Transfer" 
+      }, 
+      { 
+        "station_id": "JR-East.ChuoRapid.Tokyo", 
+        "station_name": "Tokyo", 
+        "line": "Chuo Line", 
+        "action": "Exit" 
+      }
+    ]
+  } 
+} 
 ```
 
 **Trạng thái phản hồi:** Có thể là `SUCCESS` hoặc `NO_ROUTE_FOUND` nếu không tìm thấy đường đi.
@@ -158,11 +183,7 @@ Backend định dạng lại kết quả, tính toán thông tin đi bộ và ch
   "suggested_start_station": { 
     "id": "JR-East.Yamanote.Shinjuku", 
     "name": "Shinjuku" 
-  }, 
-  "walking_info": { 
-    "distance_meters": 450, 
-    "estimated_walking_minutes": 6 
-  }, 
+  },  
   "route": { 
     "path": [ 
       "JR-East.Yamanote.Shinjuku", 
