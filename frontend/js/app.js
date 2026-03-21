@@ -1,29 +1,14 @@
 import { MapView } from './components/map-view.js';
 import { UIControls } from './components/controls.js';
 import { fetchStations } from './services/api.js';
-import { findOptimalPath } from './services/routing-engine.js';
+// Bạn có thể giữ hoặc bỏ import này nếu không dùng tìm đường offline nữa
+// import { findOptimalPath } from './services/routing-engine.js'; 
 
 const init = async () => {
     try {
         console.log('=== App Initialization Started ===');
-        
-        // Check if Leaflet is loaded
-        if (typeof L === 'undefined') {
-            console.error('❌ Leaflet library not loaded!');
-            alert('Error: Leaflet library failed to load');
-            return;
-        }
-        console.log('✓ Leaflet v' + L.version + ' loaded');
 
-        // Check if map container exists
-        const mapContainer = document.getElementById('map');
-        if (!mapContainer) {
-            console.error('❌ Map container (#map) not found!');
-            alert('Error: Map container not found in DOM');
-            return;
-        }
-        console.log('✓ Map container found');
-        console.log('  Computed size: ' + window.getComputedStyle(mapContainer).width + ' x ' + window.getComputedStyle(mapContainer).height);
+        // ... (Giữ nguyên phần kiểm tra Leaflet và Map container) ...
 
         console.log('📍 Creating MapView...');
         let mapView;
@@ -36,20 +21,14 @@ const init = async () => {
             return;
         }
 
-        // Wait a moment for map to initialize
         await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Force map to recalculate
         mapView.map.invalidateSize(true);
-        console.log('✓ Map size invalidated');
 
         console.log('📍 Creating UIControls...');
         const controls = new UIControls();
         console.log('✓ UIControls created');
 
-        // Setup reload map button
         controls.setupReloadMapButton(() => {
-            console.log('🔄 Reload button clicked');
             mapView.reloadTiles();
         });
 
@@ -57,47 +36,54 @@ const init = async () => {
         const stations = await fetchStations();
         if (!stations || stations.length === 0) {
             console.error('❌ No stations loaded!');
-            alert('Error: Failed to load station data');
             return;
         }
-        console.log('✓ Stations fetched: ' + stations.length);
 
-        // 1. Display stations on the map
-        console.log('📍 Rendering ' + stations.length + ' stations on map...');
-        try {
-            mapView.renderStations(stations);
-            console.log('✓ Stations rendered on map');
-        } catch (error) {
-            console.error('❌ Error rendering stations:', error);
-        }
-        
-        // 2. Populate station options in select boxes
-        console.log('📍 Populating UIControls...');
+        mapView.renderStations(stations);
         controls.populateStations(stations);
-        console.log('✓ UIControls populated');
 
-        // 3. Listen for route search requests
-        controls.onSearchRequested((data) => {
-            console.log('🔍 Finding route from', data.startId, 'to', data.endId);
-            // data contains: startId, endId, priority
-            const result = findOptimalPath(stations, data.startId, data.endId, data.priority);
+        // --- PHẦN THAY ĐỔI CHÍNH TẠI ĐÂY ---
+        // 3. Lắng nghe yêu cầu tìm đường và gửi tới Server Python
+        controls.onSearchRequested(async (data) => {
+            console.log('🔍 Requesting route from server:', data.startId, 'to', data.endId);
             
-            if (result) {
-                // Draw the route on the map
-                mapView.drawPath(result.path);
-                
-                // Display time/cost information on sidebar
-                controls.showResults(result);
+            try {
+                // Gọi API tới server Flask (mặc định port 5000)
+                const response = await fetch('http://localhost:5000/api/find-path', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data) // data chứa: startId, endId, priority
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Server error');
+                }
+
+                const result = await response.json();
+                console.log('✓ Route received from server:', result);
+
+                if (result && result.path) {
+                    // 1. Vẽ đường đi lên bản đồ (Sử dụng tọa độ từ BE trả về)
+                    mapView.drawPath(result.path);
+
+                    // 2. Hiển thị thông tin thời gian/chi phí lên sidebar
+                    controls.showResults(result);
+                }
+
+            } catch (error) {
+                console.error('❌ API Error:', error);
+                alert('Không thể tìm đường: ' + error.message);
             }
         });
 
         console.log('✅ === App Initialization Complete ===');
-        console.log('Map should be visible now with ' + stations.length + ' stations');
-        
+
     } catch (error) {
         console.error('❌ === INITIALIZATION ERROR ===');
         console.error(error);
-        console.error('Stack:', error.stack);
         alert('Fatal error: ' + error.message);
     }
 };

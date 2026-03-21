@@ -7,28 +7,28 @@ export class UIControls {
         this.startSearchInput = document.getElementById('start-search');
         this.startSuggestionsDropdown = document.getElementById('suggestions-dropdown');
         this.startStationId = document.getElementById('start-station-id');
-        
+
         // End Station
         this.endSearchInput = document.getElementById('end-search');
         this.endSuggestionsDropdown = document.getElementById('end-suggestions-dropdown');
         this.endStationId = document.getElementById('end-station-id');
-        
+
         // Other controls
         this.btnFindPath = document.getElementById('find-path-btn');
         this.resultPanel = document.getElementById('result-info');
         this.priorityRadios = document.getElementsByName('priority');
-        
+
         // Debug: Check if all elements exist
         console.log('=== UIControls Constructor ===');
         console.log('startSearchInput:', this.startSearchInput ? '✓' : '✗');
         console.log('startSuggestionsDropdown:', this.startSuggestionsDropdown ? '✓' : '✗');
         console.log('endSearchInput:', this.endSearchInput ? '✓' : '✗');
         console.log('endSuggestionsDropdown:', this.endSuggestionsDropdown ? '✓' : '✗');
-        
+
         this.allStations = [];
         this.selectedStartStation = null;
         this.selectedEndStation = null;
-        
+
         if (this.startSearchInput) this.setupStationSearch('start');
         if (this.endSearchInput) this.setupStationSearch('end');
     }
@@ -50,7 +50,7 @@ export class UIControls {
     setupReloadMapButton(callback) {
         const reloadBtn = document.getElementById('reload-map-btn');
         if (!reloadBtn) return;
-        
+
         reloadBtn.addEventListener('click', () => {
             console.log('Reload map button clicked');
             if (callback) callback();
@@ -63,12 +63,12 @@ export class UIControls {
     setupStationSearch(stationType) {
         const searchInput = stationType === 'start' ? this.startSearchInput : this.endSearchInput;
         const dropdown = stationType === 'start' ? this.startSuggestionsDropdown : this.endSuggestionsDropdown;
-        
+
         if (!searchInput || !dropdown) {
             console.error(`[${stationType}] Missing DOM elements`);
             return;
         }
-        
+
         console.log(`[${stationType}] Setting up station search`);
 
         // Input event for autocomplete suggestions
@@ -111,14 +111,14 @@ export class UIControls {
         const searchInput = stationType === 'start' ? this.startSearchInput : this.endSearchInput;
         const dropdown = stationType === 'start' ? this.startSuggestionsDropdown : this.endSuggestionsDropdown;
         const stationIdInput = stationType === 'start' ? this.startStationId : this.endStationId;
-        
+
         // Only show suggestions if we have data loaded
         if (this.allStations.length === 0) {
             return;
         }
 
-        const filtered = searchTerm.length === 0 
-            ? this.allStations 
+        const filtered = searchTerm.length === 0
+            ? this.allStations
             : this.allStations.filter(station => {
                 const name = station.title?.en || station.name || station.id;
                 return name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -127,7 +127,7 @@ export class UIControls {
         // Build HTML for suggestions - limit to 100 items for performance
         let html = '';
         const displayCount = Math.min(filtered.length, 100);
-        
+
         if (filtered.length === 0) {
             html = '<div class="suggestion-empty">No stations found</div>';
         } else {
@@ -135,7 +135,7 @@ export class UIControls {
                 const name = station.title?.en || station.name || station.id;
                 return `<div class="suggestion-item" data-id="${station.id}" data-name="${name}">${name}</div>`;
             }).join('');
-            
+
             if (filtered.length > 100) {
                 html += `<div class="suggestion-empty" style="font-size: 0.8rem; color: #ccc;">...showing 100 of ${filtered.length}</div>`;
             }
@@ -149,16 +149,29 @@ export class UIControls {
             item.addEventListener('click', () => {
                 const stationId = item.getAttribute('data-id');
                 const stationName = item.getAttribute('data-name');
-                
+
                 searchInput.value = stationName;
                 stationIdInput.value = stationId;
-                
+
+                // 1. Tìm object nhà ga trong danh sách allStations để lấy tọa độ
+                const stationData = this.allStations.find(s => s.id === stationId);
+
                 if (stationType === 'start') {
                     this.selectedStartStation = { id: stationId, name: stationName };
                 } else {
                     this.selectedEndStation = { id: stationId, name: stationName };
                 }
-                
+
+                // 2. Gọi MapViewInstance để di chuyển bản đồ đến ga vừa chọn
+                // Lưu ý: MapView.js đã gán instance vào window.mapViewInstance
+                if (stationData && stationData.coord && window.mapViewInstance) {
+                    window.mapViewInstance.focusOnStation(
+                        stationData.coord,
+                        stationName,
+                        stationType // Biến này có sẵn trong hàm showSuggestions
+                    );
+                }
+
                 dropdown.classList.remove('active');
             });
         });
@@ -173,12 +186,12 @@ export class UIControls {
             // Use selected stations or get from hidden inputs
             const startId = this.selectedStartStation ? this.selectedStartStation.id : this.startStationId.value;
             const endId = this.selectedEndStation ? this.selectedEndStation.id : this.endStationId.value;
-            
+
             if (!startId) {
                 alert('Please select a starting station');
                 return;
             }
-            
+
             if (!endId) {
                 alert('Please select an ending station');
                 return;
@@ -192,7 +205,7 @@ export class UIControls {
 
             // Hiệu ứng loading nhẹ cho nút bấm
             this.setLoading(true);
-            
+
             // Gọi hàm callback từ app.js truyền sang
             callback(searchData);
 

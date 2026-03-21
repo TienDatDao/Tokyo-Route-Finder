@@ -1,2 +1,17 @@
 .idea/
 *.iml
+.env
+# cache
+cache/
+**/cache/
+
+# python
+__pycache__/
+*.pyc
+
+# data
+data/raw/
+data/tmp/
+
+# logs
+*.log
