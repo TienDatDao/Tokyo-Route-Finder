@@ -4,7 +4,7 @@ import config
 import services
 
 app = Flask(__name__)
-CORS(app) # Mở cửa cho cổng 8000 của Đạt vào
+CORS(app) # Mở cửa cho cổng 8000
 
 @app.route('/find-route', methods=['POST'])
 def find_route():
