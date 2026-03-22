@@ -19,7 +19,7 @@ def handle_find_route(payload):
     graph = dm.get_clean_graph("data_system/raw_data")
 
     # 4. Gọi Member 1 (AI): Tìm đường đi tối ưu
-    ai_result = ai.find_optimal_path(graph, start_nodes, end_nodes, criteria)
+    ai_result = ai.find_optimal_route(graph, start_nodes, end_nodes, criteria)
 
     # 5. Đóng gói lại thật đẹp theo ý Đạt
     return {
