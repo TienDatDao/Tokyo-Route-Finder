@@ -1,3 +1,17 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# VS Code
+.vscode/
+
+# PyCharm
 .idea/
 *.iml
 .env
