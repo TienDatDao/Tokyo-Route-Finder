@@ -13,25 +13,19 @@ venv/
 
 # PyCharm
 .idea/
+*.iml
+.env
+# cache
+cache/
+**/cache/
 
-# OS files
-.DS_Store
-Thumbs.db
+# python
+__pycache__/
+*.pyc
 
-# Logs
+# data
+data/raw/
+data/tmp/
+
+# logs
 *.log
-
-# Build / distribution
-build/
-dist/
-*.egg-info/
-
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
-# Coverage / test
-.coverage
-htmlcov/
-
-# Cache folders (generic)
-.cache/
