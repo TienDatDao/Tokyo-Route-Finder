@@ -1,5 +1,5 @@
 import data_system.core.data_manager as dm
-import ai_engine.routing as ai
+import ai_engine.router as ai
 
 def handle_find_route(payload):
     # 1. Lấy tên ga từ cục JSON
