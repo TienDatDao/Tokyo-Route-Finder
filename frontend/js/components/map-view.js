@@ -20,12 +20,18 @@ export class MapView {
             preferCanvas: false
         });
 
-        this.currentPathLayer = null;
-        this.stationsLayer = L.layerGroup();
-        this.stationsLayer.addTo(this.map);
+        this.map.createPane('routePane');
+        this.map.getPane('routePane').style.zIndex = 400;
+        this.map.createPane('markerPane');
+        this.map.getPane('markerPane').style.zIndex = 650;
 
+        this.currentPathLayer = null;
+        this.stationsLayer = L.layerGroup().addTo(this.map);
+        this.routeMarkersLayer = L.layerGroup().addTo(this.map);
         this.startMarkerLayer = L.layerGroup().addTo(this.map);
         this.endMarkerLayer = L.layerGroup().addTo(this.map);
+        this.routeMarkers = new Map();
+        this.stationCoordinates = new Map();
 
         // Add OpenStreetMap tiles with proper configuration
         console.log('MapView: Adding OpenStreetMap tile layer...');
@@ -174,10 +180,83 @@ export class MapView {
         }
     }
 
-    drawPath(coordinates) {
-        if (this.currentPathLayer) this.map.removeLayer(this.currentPathLayer);
-        this.currentPathLayer = L.polyline(coordinates, { color: '#ff4757', weight: 5 }).addTo(this.map);
-        this.map.fitBounds(this.currentPathLayer.getBounds());
+    clearRoute() {
+        if (this.currentPathLayer) {
+            this.map.removeLayer(this.currentPathLayer);
+            this.currentPathLayer = null;
+        }
+        if (this.routeMarkersLayer) {
+            this.routeMarkersLayer.clearLayers();
+        }
+    }
+
+    drawPath(routeData) {
+        this.clearRoute();
+        if (!routeData) return;
+
+        let coordinates = [];
+        let details = [];
+        if (Array.isArray(routeData)) {
+            coordinates = routeData;
+        } else if (routeData.coords && Array.isArray(routeData.coords)) {
+            coordinates = routeData.coords;
+            details = Array.isArray(routeData.details) ? routeData.details : [];
+        }
+
+        if (!Array.isArray(coordinates) || coordinates.length === 0) return;
+
+        const latLngs = coordinates.map(coord => [coord[0], coord[1]]);
+        const stationIds = Array.isArray(routeData.stationIds) ? routeData.stationIds : [];
+        const importantSteps = (Array.isArray(details) ? details : []).filter(step => ['Board', 'Transfer', 'Arrive'].includes(step.action));
+        const importantIds = new Set(importantSteps.map(step => step.station_id));
+        const detailByStation = new Map((Array.isArray(details) ? details : []).map(step => [step.station_id, step]));
+
+        this.currentPathLayer = L.polyline(latLngs, {
+            color: '#3a4185',
+            weight: 5,
+            opacity: 0.85,
+            pane: 'routePane'
+        }).addTo(this.map);
+
+        latLngs.forEach((latLng, index) => {
+            const stationId = stationIds[index] || null;
+            const isStart = index === 0;
+            const isEnd = index === latLngs.length - 1;
+            const step = stationId ? detailByStation.get(stationId) : null;
+            const isTransfer = step?.action === 'Transfer';
+            const isImportant = isStart || isEnd || isTransfer;
+
+            const markerOptions = {
+                radius: isImportant ? 7 : 4,
+                fillColor: isStart ? '#ff4757' : isEnd ? '#1e90ff' : isTransfer ? '#2ecc71' : '#95a5a6',
+                color: isImportant ? '#ffffff' : '#7f8c8d',
+                weight: isImportant ? 2 : 1,
+                opacity: isImportant ? 1 : 0.5,
+                fillOpacity: isImportant ? 0.95 : 0.35,
+                pane: 'markerPane'
+            };
+
+            const dot = L.circleMarker(latLng, markerOptions);
+            if (step?.station_name) {
+                const label = isStart ? 'Ga xuất phát' : isEnd ? 'Ga đích' : isTransfer ? 'Đổi tuyến' : 'Ga trung gian';
+                dot.bindTooltip(`${label}: ${step.station_name}`, { sticky: true });
+            }
+            dot.addTo(this.routeMarkersLayer);
+        });
+
+        if (this.currentPathLayer.getBounds().isValid()) {
+            this.map.fitBounds(this.currentPathLayer.getBounds(), { padding: [40, 40] });
+        }
+    }
+
+    focusOnRouteStation(coord) {
+        if (!coord || coord.length < 2) return;
+        const latLng = [coord[0], coord[1]];
+        this.map.flyTo(latLng, 15, {
+            animate: true,
+            duration: 1.0,
+            easeLinearity: 0.25
+        });
     }
 
     /**

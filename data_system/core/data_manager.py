@@ -72,3 +72,16 @@ def get_clean_graph(raw_dir: str, incidents: Optional[List[Incident]] = None) ->
         graph = apply_incidents(graph, incidents)
 
     return graph
+
+
+def get_node_ids_by_name(graph, station_name):
+    if graph is None or not station_name:
+        return []
+
+    lookup = station_name.strip().lower()
+    exact_matches = [node_id for node_id, node in graph.nodes.items() if node.name.strip().lower() == lookup]
+    if exact_matches:
+        return exact_matches
+
+    partial_matches = [node_id for node_id, node in graph.nodes.items() if lookup in node.name.strip().lower()]
+    return partial_matches

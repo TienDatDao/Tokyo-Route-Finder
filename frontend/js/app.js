@@ -1,14 +1,48 @@
 import { MapView } from './components/map-view.js';
 import { UIControls } from './components/controls.js';
 import { fetchStations } from './services/api.js';
-// Bạn có thể giữ hoặc bỏ import này nếu không dùng tìm đường offline nữa
-// import { findOptimalPath } from './services/routing-engine.js'; 
+import { CONFIG } from './config.js';
+
+const calculateAverageCoord = (coords) => {
+    if (!coords || coords.length === 0) return null;
+    const sum = coords.reduce((acc, coord) => {
+        return [acc[0] + coord[0], acc[1] + coord[1]];
+    }, [0, 0]);
+    return [sum[0] / coords.length, sum[1] / coords.length];
+};
+
+const buildUniqueStationGroups = (stations) => {
+    const groups = new Map();
+
+    stations.forEach(station => {
+        const name = station.title?.en || station.name || station.id;
+        const normalized = name.trim().toLowerCase();
+
+        if (!groups.has(normalized)) {
+            groups.set(normalized, {
+                id: station.id,
+                name,
+                stationIds: [station.id],
+                coords: [station.coord]
+            });
+        } else {
+            const existing = groups.get(normalized);
+            existing.stationIds.push(station.id);
+            existing.coords.push(station.coord);
+        }
+    });
+
+    return Array.from(groups.values()).map(group => ({
+        id: group.id,
+        name: group.name,
+        stationIds: group.stationIds,
+        coord: calculateAverageCoord(group.coords)
+    }));
+};
 
 const init = async () => {
     try {
         console.log('=== App Initialization Started ===');
-
-        // ... (Giữ nguyên phần kiểm tra Leaflet và Map container) ...
 
         console.log('📍 Creating MapView...');
         let mapView;
@@ -39,38 +73,39 @@ const init = async () => {
             return;
         }
 
-        mapView.renderStations(stations);
+        const uniqueStations = buildUniqueStationGroups(stations);
+        mapView.renderStations(uniqueStations);
         controls.populateStations(stations);
 
-        // --- PHẦN THAY ĐỔI CHÍNH TẠI ĐÂY ---
-        // 3. Lắng nghe yêu cầu tìm đường và gửi tới Server Python
         controls.onSearchRequested(async (data) => {
-            console.log('🔍 Requesting route from server:', data.startId, 'to', data.endId);
+            console.log('🔍 Requesting route from server:', data.startName, 'to', data.endName, 'criteria:', data.criteria);
             
             try {
-                // Gọi API tới server Flask (mặc định port 5000)
-                const response = await fetch('http://localhost:5000/api/find-path', {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/api/find-path`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data) // data chứa: startId, endId, priority
+                    body: JSON.stringify(data)
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'Server error');
+                    throw new Error(errorData.message || errorData.error || 'Server error');
                 }
 
                 const result = await response.json();
                 console.log('✓ Route received from server:', result);
 
-                if (result && result.path) {
-                    // 1. Vẽ đường đi lên bản đồ (Sử dụng tọa độ từ BE trả về)
-                    mapView.drawPath(result.path);
-
-                    // 2. Hiển thị thông tin thời gian/chi phí lên sidebar
-                    controls.showResults(result);
+                if (result && result.route) {
+                    mapView.drawPath({
+                        coords: result.route.pathCoords || [],
+                        stationIds: result.route.path || [],
+                        details: result.route.details || []
+                    });
+                    controls.showResults(result.route);
+                } else {
+                    controls.showResults(null);
                 }
 
             } catch (error) {

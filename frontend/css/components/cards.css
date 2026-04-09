@@ -11,3 +11,26 @@
     font-size: 1.1rem;
     margin-bottom: 10px;
 }
+
+.route-step {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 0.95rem;
+}
+
+.route-step:last-child {
+    border-bottom: none;
+}
+
+.route-step-clickable {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.route-step-clickable:hover {
+    background-color: rgba(13, 110, 253, 0.08);
+}
+
+.step-action {
+    color: #0d6efd;
+}
