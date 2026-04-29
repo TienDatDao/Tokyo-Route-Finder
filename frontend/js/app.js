@@ -1,29 +1,48 @@
 import { MapView } from './components/map-view.js';
 import { UIControls } from './components/controls.js';
 import { fetchStations } from './services/api.js';
-import { findOptimalPath } from './services/routing-engine.js';
+import { CONFIG } from './config.js';
+
+const calculateAverageCoord = (coords) => {
+    if (!coords || coords.length === 0) return null;
+    const sum = coords.reduce((acc, coord) => {
+        return [acc[0] + coord[0], acc[1] + coord[1]];
+    }, [0, 0]);
+    return [sum[0] / coords.length, sum[1] / coords.length];
+};
+
+const buildUniqueStationGroups = (stations) => {
+    const groups = new Map();
+
+    stations.forEach(station => {
+        const name = station.title?.en || station.name || station.id;
+        const normalized = name.trim().toLowerCase();
+
+        if (!groups.has(normalized)) {
+            groups.set(normalized, {
+                id: station.id,
+                name,
+                stationIds: [station.id],
+                coords: [station.coord]
+            });
+        } else {
+            const existing = groups.get(normalized);
+            existing.stationIds.push(station.id);
+            existing.coords.push(station.coord);
+        }
+    });
+
+    return Array.from(groups.values()).map(group => ({
+        id: group.id,
+        name: group.name,
+        stationIds: group.stationIds,
+        coord: calculateAverageCoord(group.coords)
+    }));
+};
 
 const init = async () => {
     try {
         console.log('=== App Initialization Started ===');
-        
-        // Check if Leaflet is loaded
-        if (typeof L === 'undefined') {
-            console.error('❌ Leaflet library not loaded!');
-            alert('Error: Leaflet library failed to load');
-            return;
-        }
-        console.log('✓ Leaflet v' + L.version + ' loaded');
-
-        // Check if map container exists
-        const mapContainer = document.getElementById('map');
-        if (!mapContainer) {
-            console.error('❌ Map container (#map) not found!');
-            alert('Error: Map container not found in DOM');
-            return;
-        }
-        console.log('✓ Map container found');
-        console.log('  Computed size: ' + window.getComputedStyle(mapContainer).width + ' x ' + window.getComputedStyle(mapContainer).height);
 
         console.log('📍 Creating MapView...');
         let mapView;
@@ -36,20 +55,14 @@ const init = async () => {
             return;
         }
 
-        // Wait a moment for map to initialize
         await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Force map to recalculate
         mapView.map.invalidateSize(true);
-        console.log('✓ Map size invalidated');
 
         console.log('📍 Creating UIControls...');
         const controls = new UIControls();
         console.log('✓ UIControls created');
 
-        // Setup reload map button
         controls.setupReloadMapButton(() => {
-            console.log('🔄 Reload button clicked');
             mapView.reloadTiles();
         });
 
@@ -57,47 +70,55 @@ const init = async () => {
         const stations = await fetchStations();
         if (!stations || stations.length === 0) {
             console.error('❌ No stations loaded!');
-            alert('Error: Failed to load station data');
             return;
         }
-        console.log('✓ Stations fetched: ' + stations.length);
 
-        // 1. Display stations on the map
-        console.log('📍 Rendering ' + stations.length + ' stations on map...');
-        try {
-            mapView.renderStations(stations);
-            console.log('✓ Stations rendered on map');
-        } catch (error) {
-            console.error('❌ Error rendering stations:', error);
-        }
-        
-        // 2. Populate station options in select boxes
-        console.log('📍 Populating UIControls...');
+        const uniqueStations = buildUniqueStationGroups(stations);
+        mapView.renderStations(uniqueStations);
         controls.populateStations(stations);
-        console.log('✓ UIControls populated');
 
-        // 3. Listen for route search requests
-        controls.onSearchRequested((data) => {
-            console.log('🔍 Finding route from', data.startId, 'to', data.endId);
-            // data contains: startId, endId, priority
-            const result = findOptimalPath(stations, data.startId, data.endId, data.priority);
+        controls.onSearchRequested(async (data) => {
+            console.log('🔍 Requesting route from server:', data.startName, 'to', data.endName, 'criteria:', data.criteria);
             
-            if (result) {
-                // Draw the route on the map
-                mapView.drawPath(result.path);
-                
-                // Display time/cost information on sidebar
-                controls.showResults(result);
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/api/find-path`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || errorData.error || 'Server error');
+                }
+
+                const result = await response.json();
+                console.log('✓ Route received from server:', result);
+
+                if (result && result.route) {
+                    mapView.drawPath({
+                        coords: result.route.pathCoords || [],
+                        stationIds: result.route.path || [],
+                        details: result.route.details || []
+                    });
+                    controls.showResults(result.route);
+                } else {
+                    controls.showResults(null);
+                }
+
+            } catch (error) {
+                console.error('❌ API Error:', error);
+                alert('Không thể tìm đường: ' + error.message);
             }
         });
 
         console.log('✅ === App Initialization Complete ===');
-        console.log('Map should be visible now with ' + stations.length + ' stations');
-        
+
     } catch (error) {
         console.error('❌ === INITIALIZATION ERROR ===');
         console.error(error);
-        console.error('Stack:', error.stack);
         alert('Fatal error: ' + error.message);
     }
 };
