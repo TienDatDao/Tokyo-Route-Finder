@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Tokyo Transit Optimizer</title>
+    <link rel="stylesheet" href="../frontend/css/main.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="brand">
+                <span class="brand-icon">⚙️</span>
+                <span class="brand-name">Admin Console</span>
+            </div>
+            <nav class="admin-nav">
+                <button class="nav-item active" data-tab="stations">
+                    <span class="nav-icon">🚉</span>
+                    Stations
+                </button>
+                <button class="nav-item" data-tab="edges">
+                    <span class="nav-icon">🛤️</span>
+                    Edges / Lines
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../frontend/index.html" class="back-link">← Back to Map</a>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-header">
+                <h1 id="tab-title">Station Management</h1>
+                <div class="header-actions">
+                    <input type="text" id="search-box" placeholder="Search...">
+                    <button id="save-all-btn" class="btn-primary">Save Changes</button>
+                </div>
+            </header>
+
+            <section id="stations-tab" class="tab-content active">
+                <div class="data-table-container">
+                    <table id="stations-table">
+                        <thead>
+                            <tr>
+                                <th>Station Name</th>
+                                <th>ID</th>
+                                <th>Coord</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stations-list">
+                            <!-- Stations will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="edges-tab" class="tab-content">
+                <div class="data-table-container">
+                    <table id="edges-table">
+                        <thead>
+                            <tr>
+                                <th>Line Name</th>
+                                <th>Station A</th>
+                                <th>Station B</th>
+                                <th>Base Cost</th>
+                                <th>Adjusted Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody id="edges-list">
+                            <!-- Edges will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals or Toast notifications can go here -->
+    <div id="toast" class="toast"></div>
+
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
