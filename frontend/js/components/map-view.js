@@ -284,6 +284,7 @@ export class MapView {
     clearStations() {
         if (this.stationsLayer) {
             this.stationsLayer.clearLayers();
+
         }
     }
 }
