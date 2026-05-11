@@ -64,7 +64,11 @@ app.post('/api/apply-incident', (req, res) => {
         }
 
         // Rebuild graph với incidents mới
-        rebuildGraph();
+        const rebuildSuccess = rebuildGraph();
+        
+        if (!rebuildSuccess) {
+            return res.status(500).json({ error: 'Failed to rebuild graph' });
+        }
 
         res.json({
             status: 'SUCCESS',
@@ -89,7 +93,12 @@ app.get('/api/active-incidents', (req, res) => {
 app.post('/api/reset-incidents', (req, res) => {
     try {
         currentIncidents = [];
-        rebuildGraph();
+        const rebuildSuccess = rebuildGraph();
+        
+        if (!rebuildSuccess) {
+            return res.status(500).json({ error: 'Failed to rebuild graph after reset' });
+        }
+        
         res.json({
             status: 'SUCCESS',
             message: 'All incidents reset',
@@ -107,20 +116,28 @@ function rebuildGraph() {
         const pythonScript = path.join(__dirname, '..', 'data_system', 'rebuild_graph.py');
         const incidentsJson = JSON.stringify(currentIncidents);
         
+        console.log('🔧 Rebuilding graph with incidents:', incidentsJson);
+        
         // Gọi Python script để rebuild graph với incidents hiện tại
-        const result = execSync(`python "${pythonScript}" "${incidentsJson.replace(/"/g, '\\"')}"`, { encoding: 'utf-8' });
+        const result = execSync(`python "${pythonScript}" '${incidentsJson.replace(/'/g, "'\\''")}'`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
+        
+        console.log('📊 Python output:', result.substring(0, 200));
         
         // Extract JSON from output (skip logging messages)
         const jsonMatch = result.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             const response = JSON.parse(jsonMatch[0]);
-            console.log('Graph rebuilt:', response.message);
+            console.log('✅ Graph rebuilt successfully:', response.message);
+            console.log(`📍 Nodes: ${response.graph_nodes}, Edges: ${response.graph_edges}`);
+            return true;
         } else {
-            console.log('Graph rebuilt with current incidents');
+            console.log('⚠️ No JSON found in Python output');
+            return false;
         }
     } catch (error) {
-        console.error('Error rebuilding graph:', error.message);
-        // Don't throw - just log the error
+        console.error('❌ Error rebuilding graph:', error.message);
+        console.error('Stack:', error.stack);
+        return false;
     }
 }
 

@@ -25,15 +25,18 @@ def rebuild_graph_with_incidents(incidents_json_str):
     try:
         # Parse incidents từ JSON string
         incidents_list = []
-        if incidents_json_str and incidents_json_str.strip():
+        if incidents_json_str and incidents_json_str.strip() and incidents_json_str.strip() != '[]':
             incidents_data = json.loads(incidents_json_str)
-            for inc_data in incidents_data:
-                incident = Incident(
-                    incident_id=inc_data.get("incident_id", ""),
-                    type=IncidentType(inc_data.get("type", "STATION_CLOSED")),
-                    target_id=inc_data.get("target_id", "")
-                )
-                incidents_list.append(incident)
+            if incidents_data:  # kiểm tra rõ ràng nếu list không rỗng
+                for inc_data in incidents_data:
+                    incident = Incident(
+                        incident_id=inc_data.get("incident_id", ""),
+                        type=IncidentType(inc_data.get("type", "STATION_CLOSED")),
+                        target_id=inc_data.get("target_id", "")
+                    )
+                    incidents_list.append(incident)
+        
+        print(f"[DEBUG] Parsed {len(incidents_list)} incidents from JSON", file=sys.stderr)
         
         # Force rebuild graph
         graph = dm.force_rebuild_and_cache(RAW_DATA_DIR)
@@ -42,9 +45,13 @@ def rebuild_graph_with_incidents(incidents_json_str):
         if incidents_list:
             from data_system.core.incident_manager import apply_incidents
             graph = apply_incidents(graph, incidents_list)
+            print(f"[DEBUG] Applied {len(incidents_list)} incidents to graph", file=sys.stderr)
+        else:
+            print("[DEBUG] No incidents to apply - using clean graph", file=sys.stderr)
         
         # ✅ 🔧 QUAN TRỌNG: Lưu incidents vào cache file
         dm.save_incidents_to_cache(incidents_list)
+        print(f"[DEBUG] Saved {len(incidents_list)} incidents to cache", file=sys.stderr)
         
         # Validate graph
         errors = graph.validate()

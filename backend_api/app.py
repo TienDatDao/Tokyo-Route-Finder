@@ -6,6 +6,8 @@ import services
 app = Flask(__name__)
 CORS(app) # Mở cửa cho cổng 8000
 
+RAW_DATA_PATH = services.RAW_DATA_PATH
+
 @app.route('/find-route', methods=['POST'])
 @app.route('/api/find-path', methods=['POST'])
 def find_route():
