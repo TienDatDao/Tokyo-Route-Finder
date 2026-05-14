@@ -73,6 +73,15 @@ const init = async () => {
                 mapView.clearStations();
                 mapView.renderStations(uniqueStations);
                 controls.populateStations(stations);
+                
+                // Clear any previous selections since stations may have changed
+                document.getElementById('start-search').value = '';
+                document.getElementById('end-search').value = '';
+                document.getElementById('start-station-id').value = '';
+                document.getElementById('end-station-id').value = '';
+                document.getElementById('suggestions-dropdown').innerHTML = '';
+                document.getElementById('end-suggestions-dropdown').innerHTML = '';
+                
                 console.log('✓ Stations reloaded:', uniqueStations.length);
             } catch (error) {
                 console.error('❌ Failed to reload stations:', error);
@@ -94,6 +103,7 @@ const init = async () => {
             console.log('🔍 Requesting route from server:', data.startName, 'to', data.endName, 'criteria:', data.criteria);
             
             try {
+                console.log('📤 Sending request to:', `${CONFIG.API_BASE_URL}/api/find-path`);
                 const response = await fetch(`${CONFIG.API_BASE_URL}/api/find-path`, {
                     method: 'POST',
                     headers: {
@@ -102,44 +112,54 @@ const init = async () => {
                     body: JSON.stringify(data)
                 });
 
+                console.log('📥 Response received:', response.status, response.statusText);
+                console.log('Response headers:', {
+                    'content-type': response.headers.get('content-type'),
+                    'content-length': response.headers.get('content-length')
+                });
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || errorData.error || 'Server error');
+                    const errorData = await response.text();
+                    console.error('❌ Error response body:', errorData);
+                    throw new Error(errorData || 'Server error');
                 }
 
                 const result = await response.json();
                 console.log('✓ Route received from server:', result);
+                console.log('Route status:', result.status);
+                console.log('Route object:', result.route);
+                if (result.route) {
+                    console.log('pathCoords:', result.route.pathCoords);
+                    console.log('Number of coords:', result.route.pathCoords ? result.route.pathCoords.length : 0);
+                }
 
-                if (result && result.route) {
+                if (result && result.route && result.route.pathCoords && result.route.pathCoords.length > 0) {
+                    console.log('✅ Drawing route with pathCoords:', result.route.pathCoords);
                     mapView.drawPath({
-                        coords: result.route.pathCoords || [],
+                        coords: result.route.pathCoords,
                         stationIds: result.route.path || [],
                         details: result.route.details || []
                     });
                     controls.showResults(result.route);
                 } else {
+                    console.warn('⚠️ No valid route or pathCoords in response');
+                    console.warn('result:', result);
+                    console.warn('result.route:', result.route);
+                    console.warn('result.route.pathCoords:', result.route?.pathCoords);
                     controls.showResults(null);
                 }
-
             } catch (error) {
-                console.error('❌ API Error:', error);
-                alert('Không thể tìm đường: ' + error.message);
+                console.error('❌ Error while requesting route:', error);
+                console.error('Error stack:', error.stack);
+                alert('Error: ' + error.message);
             }
         });
 
-        console.log('✅ === App Initialization Complete ===');
-
+        console.log('=== App Initialization Completed ===');
     } catch (error) {
-        console.error('❌ === INITIALIZATION ERROR ===');
-        console.error(error);
-        alert('Fatal error: ' + error.message);
+        console.error('❌ Unexpected error during initialization:', error);
+        alert('Unexpected error: ' + error.message);
     }
 };
 
-// Wait for DOM to be fully loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    // DOM is already loaded
-    init();
-}
+init();

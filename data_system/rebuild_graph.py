@@ -11,16 +11,22 @@ project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
 from data_system.core.models import Incident, IncidentType
-from data_system.core import data_manager as dm
+from data_system.core.graph_manager import GraphManager
 
+CACHE_DIR = str(project_root / "data_system" / "cache")
 RAW_DATA_DIR = str(project_root / "data_system" / "raw_data")
+
 
 def rebuild_graph_with_incidents(incidents_json_str):
     """
     Rebuild graph và lưu cache với incidents hiện tại.
     Được gọi từ admin panel.
     
-    🔧 QUAN TRỌNG: Sau khi áp dụng incidents, LƯU VÀO CACHE!
+    Flow:
+    1. Parse incidents từ JSON
+    2. Apply incidents vào original graph
+    3. So sánh và validate
+    4. Lưu vào cache
     """
     try:
         # Parse incidents từ JSON string
@@ -38,37 +44,49 @@ def rebuild_graph_with_incidents(incidents_json_str):
         
         print(f"[DEBUG] Parsed {len(incidents_list)} incidents from JSON", file=sys.stderr)
         
-        # Force rebuild graph
-        graph = dm.force_rebuild_and_cache(RAW_DATA_DIR)
-        
-        # Áp dụng incidents
+        # Tạo graph manager
+        manager = GraphManager(CACHE_DIR)
+
+        # Nếu chưa có original graph, build từ raw data
+        if not manager.original_graph:
+            print("[DEBUG] Original graph not found, building from raw data...", file=sys.stderr)
+            manager.build_and_save_original(RAW_DATA_DIR)
+
+        # Áp dụng incidents (hoặc reset nếu không có incidents)
         if incidents_list:
-            from data_system.core.incident_manager import apply_incidents
-            graph = apply_incidents(graph, incidents_list)
-            print(f"[DEBUG] Applied {len(incidents_list)} incidents to graph", file=sys.stderr)
+
+            result = manager.apply_and_save_incidents(
+                incidents_list,
+                RAW_DATA_DIR
+            )
+
         else:
-            print("[DEBUG] No incidents to apply - using clean graph", file=sys.stderr)
-        
-        # ✅ 🔧 QUAN TRỌNG: Lưu incidents vào cache file
-        dm.save_incidents_to_cache(incidents_list)
-        print(f"[DEBUG] Saved {len(incidents_list)} incidents to cache", file=sys.stderr)
-        
-        # Validate graph
-        errors = graph.validate()
-        
-        result = {
-            "status": "SUCCESS",
-            "message": f"Graph rebuilt with {len(incidents_list)} incidents",
-            "graph_nodes": len(graph.nodes),
-            "graph_edges": sum(len(edges) for edges in graph.edges.values()),
-            "validation_errors": errors if errors else [],
-            "incidents_applied": [
-                {"id": inc.incident_id, "type": inc.type.value, "target": inc.target_id}
-                for inc in incidents_list
-            ]
-        }
-        
-        print(json.dumps(result, ensure_ascii=False))
+
+            print(
+                "[DEBUG] No incidents - resetting to original",
+                file=sys.stderr
+            )
+
+            result = manager.reset_to_original(
+                RAW_DATA_DIR
+            )
+
+        # So sánh original vs current
+        comparison = manager.compare_graphs()
+
+        # Thêm comparison vào result
+        result["comparison"] = comparison
+
+        # Output JSON
+        # Output JSON
+        print(json.dumps(
+            result,
+            ensure_ascii=False,
+            default=lambda o: (
+                o.value if hasattr(o, "value")
+                else o.__dict__
+            )
+        ))
         
     except json.JSONDecodeError as e:
         error_result = {
@@ -80,15 +98,17 @@ def rebuild_graph_with_incidents(incidents_json_str):
     except Exception as e:
         error_result = {
             "status": "ERROR",
-            "message": f"Error rebuilding graph: {str(e)}"
+            "message": f"Error rebuilding graph: {str(e)}",
+            "type": type(e).__name__
         }
         print(json.dumps(error_result, ensure_ascii=False), file=sys.stderr)
+        import traceback
+        print(traceback.format_exc(), file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     # Lấy JSON string từ command line argument
     incidents_json = sys.argv[1] if len(sys.argv) > 1 else "[]"
     rebuild_graph_with_incidents(incidents_json)
-
-
 

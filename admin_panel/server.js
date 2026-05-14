@@ -2,8 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { execSync } = require('child_process');
-
+const { execSync, execFileSync } = require('child_process');
 const app = express();
 const PORT = 5001;
 
@@ -18,7 +17,7 @@ let currentIncidents = [];
 app.get('/api/stations-and-lines', (req, res) => {
     try {
         const pythonScript = path.join(__dirname, '..', 'data_system', 'get_stations_lines.py');
-        const result = execSync(`python "${pythonScript}"`, { encoding: 'utf-8' });
+        const result = execSync(`python "${pythonScript}"`, { encoding: 'utf-8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
         // Extract JSON from output (skip logging messages)
         const jsonMatch = result.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
@@ -89,7 +88,24 @@ app.get('/api/active-incidents', (req, res) => {
     });
 });
 
-// API: Reset tất cả incidents
+// API: Lấy trạng thái so sánh của graph (original vs current)
+app.get('/api/graph-status', (req, res) => {
+    try {
+        const pythonScript = path.join(__dirname, '..', 'data_system', 'get_graph_status.py');
+        const result = execSync(`python "${pythonScript}"`, { encoding: 'utf-8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
+        const jsonMatch = result.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error('No JSON found in Python output');
+        }
+        const data = JSON.parse(jsonMatch[0]);
+        res.json(data);
+    } catch (error) {
+        console.error('Error getting graph status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// API: Reset incidents về original
 app.post('/api/reset-incidents', (req, res) => {
     try {
         currentIncidents = [];
@@ -119,19 +135,46 @@ function rebuildGraph() {
         console.log('🔧 Rebuilding graph with incidents:', incidentsJson);
         
         // Gọi Python script để rebuild graph với incidents hiện tại
-        const result = execSync(`python "${pythonScript}" '${incidentsJson.replace(/'/g, "'\\''")}'`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
-        
-        console.log('📊 Python output:', result.substring(0, 200));
+const result = execFileSync(
+    'python',
+    [
+        pythonScript,
+        incidentsJson
+    ],
+    {
+        encoding: 'utf-8',
+        env: {
+            ...process.env,
+            PYTHONIOENCODING: 'utf-8'
+        }
+    }
+);
+        console.log('📊 Python output (first 300 chars):', result.substring(0, 300));
         
         // Extract JSON from output (skip logging messages)
         const jsonMatch = result.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             const response = JSON.parse(jsonMatch[0]);
-            console.log('✅ Graph rebuilt successfully:', response.message);
-            console.log(`📍 Nodes: ${response.graph_nodes}, Edges: ${response.graph_edges}`);
-            return true;
+            
+            if (response.status === 'SUCCESS') {
+                console.log('✅ Graph rebuilt successfully:', response.message);
+                console.log(`📍 Original: ${response.original_nodes} nodes, ${response.original_edges} edges`);
+                console.log(`📍 Current:  ${response.current_nodes} nodes, ${response.current_edges} edges`);
+                console.log(`📍 Removed:  ${response.removed_nodes} nodes, ${response.removed_edges} edges`);
+                
+                // Log comparison if available
+                if (response.comparison) {
+                    console.log(`🔄 Comparison: ${response.comparison.difference.nodes_percentage}% nodes removed`);
+                }
+                
+                return true;
+            } else {
+                console.error('❌ Graph rebuild failed:', response.message);
+                return false;
+            }
         } else {
             console.log('⚠️ No JSON found in Python output');
+            console.log('Full output:', result);
             return false;
         }
     } catch (error) {
@@ -144,4 +187,3 @@ function rebuildGraph() {
 app.listen(PORT, () => {
     console.log(` Admin Panel Server running at http://localhost:${PORT}`);
 });
-

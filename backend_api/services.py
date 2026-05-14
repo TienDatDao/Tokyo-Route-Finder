@@ -8,11 +8,17 @@ project_root = Path(__file__).resolve().parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import data_system.core.data_manager as dm
+from data_system.core.graph_manager import GraphManager
 import ai_engine.router as ai
 
 RAW_DATA_PATH = project_root / config.DATA_RAW_DIR
+CACHE_DIR = project_root / "data_system" / "cache"
 VALID_CRITERIA = {"shortest_time", "lowest_cost", "least_transfers"}
+
+# Singleton instance của GraphManager
+
+def _get_graph_manager():
+    return GraphManager(str(CACHE_DIR))
 
 
 def _build_search_graph(graph):
@@ -53,9 +59,23 @@ def handle_find_route(payload):
             "message": "Vui lòng cung cấp ga xuất phát và ga đích."
         }
 
-    graph = dm.get_clean_graph(str(RAW_DATA_PATH))
-    start_nodes = dm.get_node_ids_by_name(graph, start_name)
-    end_nodes = dm.get_node_ids_by_name(graph, end_name)
+    # Get current graph (with incidents applied if any)
+    manager = _get_graph_manager()
+    graph = manager.get_current_graph()
+    
+    # Helper function to find nodes by name
+    def get_node_ids_by_name(g, station_name):
+        if not station_name:
+            return []
+        lookup = station_name.strip().lower()
+        exact_matches = [node_id for node_id, node in g.nodes.items() if node.name.strip().lower() == lookup]
+        if exact_matches:
+            return exact_matches
+        partial_matches = [node_id for node_id, node in g.nodes.items() if lookup in node.name.strip().lower()]
+        return partial_matches
+    
+    start_nodes = get_node_ids_by_name(graph, start_name)
+    end_nodes = get_node_ids_by_name(graph, end_name)
 
     if not start_nodes or not end_nodes:
         return {
@@ -77,6 +97,10 @@ def handle_find_route(payload):
         node = graph.nodes.get(station_id)
         if node:
             path_coords.append([node.lat, node.lon])
+        else:
+            print(f"Warning: Station {station_id} not found in graph nodes")
+
+    print(f"Generated {len(path_coords)} coordinates for path")
 
     return {
         "status": "SUCCESS",
@@ -95,7 +119,8 @@ def get_filtered_stations(raw_dir: str):
     """
     Trả về danh sách stations đã loại trừ những ga bị đóng cửa.
     """
-    graph = dm.get_clean_graph(raw_dir)
+    manager = _get_graph_manager()
+    graph = manager.get_current_graph()
     stations = []
     for node_id, node in graph.nodes.items():
         stations.append({

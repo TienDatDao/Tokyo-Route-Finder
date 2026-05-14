@@ -151,7 +151,7 @@ class Incident:
 @dataclass
 class RouteDetail: # chi tiet tuyen duong
     station_id: str # id ga
-    statio_name: str # ten ga
+    station_name: str # ten ga
     line: str #ten tuyen
     action: str # hanh dong "board", "transfer", "exit"
 
@@ -164,7 +164,7 @@ class Route:
     details: List[RouteDetail]
 
 @dataclass
-class RoutingRequest:
+class RoutingResponse:
     status: ResponseStatus # "SUCCESS", "NO_ROUTE_FOUND",...
     suggested_start_station: Optional[Dict[str, str]] = None
     walking_info: Optional[Dict[str, float]] = None

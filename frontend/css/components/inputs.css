@@ -81,13 +81,6 @@ input[type="text"]:focus {
 
 .suggestion-empty {
     padding: 10px;
-    text-align: center;
-    color: #999;
-    font-size: 0.9rem;
-}
-
-.suggestion-empty {
-    padding: 10px;
     color: #999;
     text-align: center;
 }
@@ -95,11 +88,6 @@ input[type="text"]:focus {
 .options {
     margin-bottom: 20px;
     display: flex;
-    gap: 15px;
-}
-
-.options {
-    margin-bottom: 20px;
-    display: flex;
-    gap: 15px;
+    flex-direction: column;
+    gap: 10px;
 }
