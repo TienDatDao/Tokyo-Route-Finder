@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Tokyo Route Finder</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗾 Admin Panel - Tokyo Route Finder</h1>
+            <p>Quản lý sự cố giao thông và cập nhật bản đồ</p>
+        </header>
+
+        <main>
+            <!-- Panel Áp Dụng Sự Cố -->
+            <section class="panel apply-incident-panel">
+                <h2>📍 Áp Dụng Sự Cố</h2>
+
+                <div class="form-group">
+                    <label for="incident-type">Loại Sự Cố:</label>
+                    <select id="incident-type" onchange="updateTargetOptions()">
+                        <option value="">-- Chọn loại --</option>
+                        <option value="STATION_CLOSED">Đóng Cửa Ga</option>
+                        <option value="LINE_MAINTENANCE">Bảo Trì Tuyến</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="target-id">Chọn Ga / Tuyến:</label>
+                    <select id="target-id">
+                        <option value="">-- Chọn mục tiêu --</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="applyIncident()" class="btn btn-apply">✓ Áp Dụng</button>
+                    <button onclick="resetIncidents()" class="btn btn-reset">🔄 Reset Tất Cả</button>
+                </div>
+
+                <div id="apply-message" class="message"></div>
+            </section>
+
+            <!-- Panel Sự Cố Đang Hoạt Động -->
+            <section class="panel active-incidents-panel">
+                <h2>⚠️ Sự Cố Đang Hoạt Động</h2>
+                <div id="incidents-list" class="incidents-list">
+                    <p class="empty-state">Không có sự cố nào</p>
+                </div>
+            </section>
+
+            <!-- Panel Thông Tin Hệ Thống -->
+            <section class="panel system-info-panel">
+                <h2>📊 Thông Tin Hệ Thống</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Tổng Ga:</span>
+                        <span id="total-stations" class="value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Tổng Tuyến:</span>
+                        <span id="total-lines" class="value">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Sự Cố Hoạt Động:</span>
+                        <span id="active-count" class="value">0</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Tokyo Route Finder Admin Panel v1.0</p>
+        </footer>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
+

@@ -280,4 +280,11 @@ export class MapView {
 
         console.log('MapView: Tiles reloaded');
     }
+
+    clearStations() {
+        if (this.stationsLayer) {
+            this.stationsLayer.clearLayers();
+
+        }
+    }
 }
