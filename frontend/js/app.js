@@ -62,8 +62,21 @@ const init = async () => {
         const controls = new UIControls();
         console.log('✓ UIControls created');
 
-        controls.setupReloadMapButton(() => {
+        controls.setupReloadMapButton(async () => {
+            console.log('🔄 Reloading map and stations...');
             mapView.reloadTiles();
+            
+            // Reload stations from API
+            try {
+                const stations = await fetchStations();
+                const uniqueStations = buildUniqueStationGroups(stations);
+                mapView.clearStations();
+                mapView.renderStations(uniqueStations);
+                controls.populateStations(stations);
+                console.log('✓ Stations reloaded:', uniqueStations.length);
+            } catch (error) {
+                console.error('❌ Failed to reload stations:', error);
+            }
         });
 
         console.log('📍 Fetching stations...');

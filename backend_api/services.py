@@ -89,3 +89,21 @@ def handle_find_route(payload):
             "details": ai_result["route"]["details"]
         }
     }
+
+
+def get_filtered_stations(raw_dir: str):
+    """
+    Trả về danh sách stations đã loại trừ những ga bị đóng cửa.
+    """
+    graph = dm.get_clean_graph(raw_dir)
+    stations = []
+    for node_id, node in graph.nodes.items():
+        stations.append({
+            "id": node_id,
+            "name": node.name,
+            "coord": [node.lon, node.lat],  # Note: coord is [lon, lat]
+            "title": {
+                "en": node.name
+            }
+        })
+    return stations
