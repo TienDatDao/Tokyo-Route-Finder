@@ -31,18 +31,21 @@ def _build_search_graph(graph):
                 "lat": node.lat,
                 "lon": node.lon
             },
-            "connections": {}
+            "connections": []
         }
 
     for from_node, edges in graph.edges.items():
         for edge in edges:
             if from_node not in search_graph or edge.to_node not in search_graph:
                 continue
-            search_graph[from_node]["connections"][edge.to_node] = {
+            search_graph[from_node]["connections"].append({
+                "to": edge.to_node,
                 "line": edge.line or "walk",
                 "time": edge.time,
                 "cost": edge.cost
-            }
+            })
+            if from_node == "JR-East.Yamanote.Shibuya":
+                print(search_graph[from_node]["connections"][:5])
 
     return search_graph
 

@@ -1,13 +1,27 @@
 from typing import List
 from copy import deepcopy
+from pathlib import Path
 
+from .station_group_resolver import (
+    StationGroupResolver
+)
 from .models import (
     Graph,
     Incident,
     IncidentType,
     EdgeType
 )
+BASE_DIR = Path(__file__).resolve().parent.parent
 
+STATION_GROUPS_PATH = (
+    BASE_DIR
+    / "raw_data"
+    / "station_groups.json"
+)
+
+resolver = StationGroupResolver(
+    STATION_GROUPS_PATH
+)
 
 def apply_incidents(
         graph: Graph,
@@ -24,27 +38,49 @@ def apply_incidents(
 
         if incident.type == IncidentType.STATION_CLOSED:
 
-            station_id = incident.target_id
+            raw_target = incident.target_id
 
-            if station_id in filtered_graph.nodes:
-                del filtered_graph.nodes[station_id]
-
-            filtered_graph.edges.pop(
-                station_id,
-                None
+            station_name = (
+                raw_target
+                .split(".")[-1]
             )
 
-            for node_id in filtered_graph.edges:
+            station_nodes = resolver.resolve(
+                station_name
+            )
 
-                filtered_graph.edges[node_id] = [
+            print(
+                f"🚫 Closing station group: "
+                f"{station_name}"
+            )
 
-                    edge
+            print(
+                f"   Removing {len(station_nodes)} nodes"
+            )
 
-                    for edge in
-                    filtered_graph.edges[node_id]
+            for station_id in station_nodes:
 
-                    if edge.to_node != station_id
-                ]
+                # Remove node
+                if station_id in filtered_graph.nodes:
+                    del filtered_graph.nodes[station_id]
+
+                # Remove outgoing edges
+                filtered_graph.edges.pop(
+                    station_id,
+                    None
+                )
+
+                # Remove incoming edges
+                for node_id in filtered_graph.edges:
+                    filtered_graph.edges[node_id] = [
+
+                        edge
+
+                        for edge in
+                        filtered_graph.edges[node_id]
+
+                        if edge.to_node != station_id
+                    ]
 
         # ==========================================
         # LINE MAINTENANCE
@@ -86,6 +122,7 @@ def apply_incidents(
                 f"for line maintenance: "
                 f"{closed_line}"
             )
+
 
     # ==========================================
     # REMOVE ISOLATED NODES

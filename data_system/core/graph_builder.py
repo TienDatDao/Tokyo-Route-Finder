@@ -122,7 +122,7 @@ def _add_edges_for_station_list(
             edge_type=EdgeType.TRAIN,
             line=line_id,  # IMPORTANT
             time=time_min,
-            cost=config.TRAIN_COST_YEN,
+            cost=round(distance * config.TRAIN_COST_PER_KM),
             distance=distance
         )
 
@@ -239,7 +239,25 @@ def _build_walk_edges(
                     if station_a == station_b:
                         continue
 
-                    # avoid same line transfer
+                    # =========================================
+                    # ONLY SAME REAL STATION
+                    # =========================================
+
+                    base_a = get_station_base_name(
+                        station_a
+                    )
+
+                    base_b = get_station_base_name(
+                        station_b
+                    )
+
+                    if base_a != base_b:
+                        continue
+
+                    # =========================================
+                    # AVOID SAME LINE
+                    # =========================================
+
                     line_a = get_line_id(station_a)
                     line_b = get_line_id(station_b)
 
@@ -255,7 +273,10 @@ def _build_walk_edges(
                         node_b.lon
                     )
 
-                    # too far -> not transfer
+                    # =========================================
+                    # TOO FAR = NOT TRANSFER
+                    # =========================================
+
                     if (
                             distance >
                             config.MAX_TRANSFER_DISTANCE_KM
@@ -269,12 +290,36 @@ def _build_walk_edges(
                         )
                     )
 
-                # nearest transfers only
+                # =============================================
+                # NEAREST TRANSFERS ONLY
+                # =============================================
+
                 candidates.sort()
 
-                for distance, station_b in candidates[:2]:
+                # =====================================================
+                # ONLY CONNECT NEAREST STATION PER DIFFERENT LINE
+                # =====================================================
 
-                    # same fare zone?
+                nearest_per_line = {}
+
+                for distance, station_b in candidates:
+
+                    target_line = get_line_id(station_b)
+
+                    if (
+                            target_line not in nearest_per_line
+                            or distance < nearest_per_line[target_line][0]
+                    ):
+                        nearest_per_line[target_line] = (
+                            distance,
+                            station_b
+                        )
+
+                # =====================================================
+                # BUILD WALK EDGES
+                # =====================================================
+
+                for distance, station_b in nearest_per_line.values():
                     is_same_fare_zone = any(
                         (
                                 station_a in fz and
@@ -283,14 +328,18 @@ def _build_walk_edges(
                         for fz in complex_group
                     )
 
-                    walk_time = (
-                        config.WALK_TIME_SAME_ZONE_MIN
+                    # IMPORTANT:
+                    # make walking expensive enough
+                    base_walk = (
+                        6
                         if is_same_fare_zone
-                        else config.WALK_TIME_DIFF_ZONE_MIN
+                        else 10
                     )
 
-                    # walking penalty by distance
-                    walk_time += distance * 8
+                    walk_time = (
+                            base_walk
+                            + distance * 20
+                    )
 
                     add_bidirectional_edge(
                         graph=graph,
@@ -304,12 +353,6 @@ def _build_walk_edges(
                     )
 
                     transfer_edges += 2
-
-    logger.info(
-        f"Built {transfer_edges} transfer edges"
-    )
-
-
 # =========================================================
 # MAIN
 # =========================================================
