@@ -191,8 +191,12 @@ export class MapView {
     }
 
     drawPath(routeData) {
+        console.log('🎯 MapView.drawPath called with:', routeData);
         this.clearRoute();
-        if (!routeData) return;
+        if (!routeData) {
+            console.warn('routeData is null or undefined');
+            return;
+        }
 
         let coordinates = [];
         let details = [];
@@ -203,20 +207,33 @@ export class MapView {
             details = Array.isArray(routeData.details) ? routeData.details : [];
         }
 
-        if (!Array.isArray(coordinates) || coordinates.length === 0) return;
+        console.log('📍 Extracted coordinates:', coordinates);
+        console.log('📍 Coordinates length:', coordinates.length);
 
-        const latLngs = coordinates.map(coord => [coord[0], coord[1]]);
+        if (!Array.isArray(coordinates) || coordinates.length === 0) {
+            console.warn('MapView: No coordinates to draw path');
+            return;
+        }
+
+        const latLngs = coordinates.map(coord => {
+            return [coord[0], coord[1]];
+        });
+        
+        console.log('📍 latLngs for polyline:', latLngs);
+        
         const stationIds = Array.isArray(routeData.stationIds) ? routeData.stationIds : [];
         const importantSteps = (Array.isArray(details) ? details : []).filter(step => ['Board', 'Transfer', 'Arrive'].includes(step.action));
         const importantIds = new Set(importantSteps.map(step => step.station_id));
         const detailByStation = new Map((Array.isArray(details) ? details : []).map(step => [step.station_id, step]));
 
+        console.log('🎨 Creating polyline with', latLngs.length, 'points');
         this.currentPathLayer = L.polyline(latLngs, {
             color: '#3a4185',
             weight: 5,
             opacity: 0.85,
             pane: 'routePane'
         }).addTo(this.map);
+        console.log('✅ Polyline added to map');
 
         latLngs.forEach((latLng, index) => {
             const stationId = stationIds[index] || null;
@@ -244,9 +261,15 @@ export class MapView {
             dot.addTo(this.routeMarkersLayer);
         });
 
+        console.log('🎨 Created', latLngs.length, 'markers');
+        
         if (this.currentPathLayer.getBounds().isValid()) {
+            console.log('🗺️ Fitting bounds to route');
             this.map.fitBounds(this.currentPathLayer.getBounds(), { padding: [40, 40] });
+        } else {
+            console.warn('⚠️ Polyline bounds not valid');
         }
+        console.log('✅ drawPath completed');
     }
 
     focusOnRouteStation(coord) {

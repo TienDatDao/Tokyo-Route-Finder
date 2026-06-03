@@ -3,14 +3,19 @@ from dataclasses import dataclass
 
 @dataclass
 class GraphConfig:
-    # Tốc độ tàu trung bình (km/h)
-    TRAIN_SPEED_KMH: float = 40.0
-    # Phí mỗi đoạn tàu (yen)
-    TRAIN_COST_YEN: float = 150.0
-    # Thời gian đi bộ trong cùng fare zone (phút)
-    WALK_TIME_SAME_ZONE_MIN: float = 2.0
-    # Thời gian đi bộ khác fare zone (phút)
-    WALK_TIME_DIFF_ZONE_MIN: float = 7.0
 
-# Instance global
+    TRAIN_SPEED_KMH: float = 38.0
+
+    TRAIN_COST_YEN: float = 150.0
+
+    TRAIN_COST_PER_KM = 35.0
+
+    WALK_TIME_SAME_ZONE_MIN: float = 5.0
+
+    WALK_TIME_DIFF_ZONE_MIN: float = 10.0
+
+    MAX_TRANSFER_DISTANCE_KM: float = 0.35
+
+    TRANSFER_PENALTY_MIN: float = 8.0
+
 config = GraphConfig()
