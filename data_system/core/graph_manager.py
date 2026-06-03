@@ -65,12 +65,19 @@ class GraphManager:
         self.original_graph: Optional[Graph] = None
         self.current_graph: Optional[Graph] = None
         self.current_incidents: List[Incident] = []
+        
+        # Raw data path (sẽ được set sau)
+        self.raw_data_path: Optional[str] = None
 
         self._ensure_cache_dir()
 
         # Auto load original graph
         if os.path.exists(self.original_graph_file):
             self.load_original()
+    
+    def set_raw_data_path(self, raw_data_path: str):
+        """Set đường dẫn đến raw data để auto-build graph nếu cần."""
+        self.raw_data_path = raw_data_path
 
     # =========================================================
     # CACHE
@@ -457,36 +464,44 @@ class GraphManager:
     # =========================================================
 
     def get_original_graph(self) -> Graph:
+        """
+        Lấy original graph từ memory hoặc cache.
+        Nếu chưa có, tự động build từ raw data nếu raw_data_path đã được set.
+        """
 
         if self.original_graph is not None:
             return self.original_graph
 
         if os.path.exists(self.original_graph_file):
-
             with open(self.original_graph_file, 'rb') as f:
                 self.original_graph = pickle.load(f)
-
             return self.original_graph
 
+        # Auto-build từ raw data nếu có path
+        if self.raw_data_path:
+            print(
+                f"⚠️  [GraphManager] Original graph not found in cache, "
+                f"auto-building from {self.raw_data_path}..."
+            )
+            return self.build_and_save_original(self.raw_data_path)
+
         raise RuntimeError(
-            "Original graph not found"
+            "Original graph not found in cache and raw_data_path not set"
         )
 
     def get_current_graph(self) -> Graph:
+        """
+        Lấy current graph từ cache hoặc memory.
+        Nếu có current graph (incidents applied), trả về nó.
+        Nếu không có, trả về original graph.
+        """
 
-        def get_current_graph(self) -> Graph:
-
-            if os.path.exists(self.current_graph_file):
-                with open(self.current_graph_file, 'rb') as f:
-                    return pickle.load(f)
-
-            return self.get_original_graph()
+        if self.current_graph is not None:
+            return self.current_graph
 
         if os.path.exists(self.current_graph_file):
-
             with open(self.current_graph_file, 'rb') as f:
                 self.current_graph = pickle.load(f)
-
             return self.current_graph
 
         return self.get_original_graph()

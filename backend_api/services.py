@@ -18,7 +18,10 @@ VALID_CRITERIA = {"shortest_time", "lowest_cost", "least_transfers"}
 # Singleton instance của GraphManager
 
 def _get_graph_manager():
-    return GraphManager(str(CACHE_DIR))
+    manager = GraphManager(str(CACHE_DIR))
+    # Ensure manager có raw data path để auto-build nếu cần
+    manager.set_raw_data_path(str(RAW_DATA_PATH))
+    return manager
 
 
 def _build_search_graph(graph):
