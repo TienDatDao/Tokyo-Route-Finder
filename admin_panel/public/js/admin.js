@@ -32,9 +32,9 @@ async function loadStationsAndLines() {
 // Cập nhật danh sách mục tiêu dựa trên loại sự cố
 function updateTargetOptions() {
     const incidentType = document.getElementById('incident-type').value;
-    const targetSelect = document.getElementById('target-id');
-    
-    targetSelect.innerHTML = '<option value="">-- Chọn mục tiêu --</option>';
+    const targetList = document.getElementById('target-list');
+
+    targetList.innerHTML = '';
 
     if (incidentType === 'STATION_CLOSED') {
         // Hiển thị danh sách ga
@@ -42,7 +42,7 @@ function updateTargetOptions() {
             const option = document.createElement('option');
             option.value = stationId;
             option.textContent = `${stationsData[stationId]} (${stationId})`;
-            targetSelect.appendChild(option);
+            targetList.appendChild(option);
         });
     } else if (incidentType === 'LINE_MAINTENANCE') {
         // Hiển thị danh sách tuyến
@@ -50,7 +50,7 @@ function updateTargetOptions() {
             const option = document.createElement('option');
             option.value = line;
             option.textContent = line;
-            targetSelect.appendChild(option);
+            targetList.appendChild(option);
         });
     }
 }
@@ -82,7 +82,7 @@ async function applyIncident() {
             showMessage('success', `✓ Đã áp dụng sự cố cho ${targetId}`);
             document.getElementById('incident-type').value = '';
             document.getElementById('target-id').value = '';
-            document.getElementById('target-id').innerHTML = '<option value="">-- Chọn mục tiêu --</option>';
+            updateTargetOptions();
             refreshIncidents();
             // Reload page to reflect changes in map (if applicable)
             setTimeout(() => location.reload(), 1000);

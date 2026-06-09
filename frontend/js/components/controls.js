@@ -193,7 +193,7 @@ export class UIControls {
     onSearchRequested(callback) {
         if (!this.btnFindPath) return;
 
-        this.btnFindPath.addEventListener('click', () => {
+        this.btnFindPath.addEventListener('click', async () => {
             const startName = this.selectedStartStation ? this.selectedStartStation.name : this.startSearchInput?.value.trim();
             const endName = this.selectedEndStation ? this.selectedEndStation.name : this.endSearchInput?.value.trim();
 
@@ -214,8 +214,13 @@ export class UIControls {
             };
 
             this.setLoading(true);
-            callback(searchData);
-            setTimeout(() => this.setLoading(false), 500);
+            try {
+                await callback(searchData);
+            } catch (error) {
+                console.error('Error in search callback:', error);
+            } finally {
+                this.setLoading(false);
+            }
         });
     }
 
