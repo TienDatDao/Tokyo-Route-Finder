@@ -34,6 +34,29 @@ Tokyo Route Finder là ứng dụng tìm đường trên bản đồ Tokyo, hi�
 3. Mở trình duyệt vào:
    - `http://localhost:8000`
 
+### 3. Chạy Admin Panel
+
+1. Mở terminal mới và điều hướng vào `admin_panel`:
+   ```bash
+   cd d:\AI\Tokyo-Route-Finder\admin_panel
+   ```
+2. Cài đặt dependencies (chỉ cần lần đầu):
+   ```bash
+   npm install
+   ```
+3. Chạy server Admin Panel:
+   ```bash
+   npm start
+   ```
+   hoặc
+   ```bash
+   node server.js
+   ```
+4. Mở trình duyệt vào:
+   - `http://localhost:5001`
+
+**Lưu ý**: Admin panel sẽ kết nối với Python scripts để quản lý sự cố (đóng ga, bảo trì tuyến)
+
 ## Tính năng đã cập nhật
 
 - Đường đi được vẽ bằng **đường màu xanh** (blue) dưới các điểm ga.

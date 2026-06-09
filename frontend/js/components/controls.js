@@ -285,7 +285,7 @@ export class UIControls {
                 <h3>Kết quả hành trình</h3>
                 <p>⏱ <strong>Thời gian:</strong> ${route.total_time.toFixed(1)} phút</p>
                 <p>💰 <strong>Chi phí:</strong> ${route.total_cost.toFixed(0)} ¥</p>
-                <p>🔁 <strong>Đổi tuyến:</strong> ${route.transfers}</p>
+                <p>🔁 <strong>Đổi tuyến:</strong> ${((route.details || []).filter(step => ['Board', 'Transfer', 'Arrive'].includes(step.action))).length-2}</p>
                 <p>📍 <strong>Số ga ghi danh:</strong> ${((route.details || []).filter(step => ['Board', 'Transfer', 'Arrive'].includes(step.action))).length}</p>
             </div>
             <div class="result-card">
